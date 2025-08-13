@@ -1,0 +1,5 @@
+CREATE TABLE GroupMembers (
+    GroupMemberId INT IDENTITY(1,1) PRIMARY KEY,
+    GroupId INT NOT NULL FOREIGN KEY REFERENCES Groups(GroupId),
+    UserId INT NOT NULL FOREIGN KEY REFERENCES Users(UserId)
+);
