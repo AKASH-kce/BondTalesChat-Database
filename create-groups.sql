@@ -1,4 +1,0 @@
-CREATE TABLE Groups (
-    GroupId INT IDENTITY(1,1) PRIMARY KEY,
-    GroupName NVARCHAR(100) NOT NULL
-);
