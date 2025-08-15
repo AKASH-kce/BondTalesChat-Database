@@ -181,9 +181,265 @@ For better scalability and team collaboration, **BondTalesChat** is split into m
 5. **Firebase** repo holds configs for notifications and online/offline tracking.
 6. **Docs** repo stores architecture diagrams, API references, and setup guides.
 
-> This separation ensures independent deployment, isolated testing, and easier CI/CD pipelines.
 
+#  Chat System (Server)
 
+This project is a **WhatsApp-like chat backend** built with **C# (.NET)** and **SQL Server**, using **SignalR** for real-time messaging.  
+It supports **1:1 and group chats**, message delivery/read tracking, and user presence.
+
+---
+
+## **Table of Contents**
+
+1. [Database Schema](#database-schema)  
+2. [Table Descriptions](#table-descriptions)  
+3. [Message Flow](#message-flow)  
+4. [SignalR Integration](#signalr-integration)  
+5. [Usage](#usage)  
+6. [Diagram](#diagram)  
+7. [Notes](#notes)
+
+---
+
+## **Database Schema & Table Creation**
+
+### 1. Users Table
+Stores user information.
+
+```sql
+IF OBJECT_ID('dbo.Users','U') IS NULL
+CREATE TABLE dbo.Users(
+  UserId INT IDENTITY PRIMARY KEY,
+  DisplayName NVARCHAR(200) NOT NULL,
+  ProfilePicture NVARCHAR(500) NULL,
+  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+````
+
+### 2. Conversations Table
+
+Stores both 1:1 and group chats.
+
+```sql
+IF OBJECT_ID('dbo.Conversations','U') IS NULL
+CREATE TABLE dbo.Conversations(
+  ConversationId INT IDENTITY PRIMARY KEY,
+  IsGroup BIT NOT NULL DEFAULT 0, -- 0=1:1, 1=Group
+  Title NVARCHAR(200) NULL,       -- Group title
+  CreatedBy INT NULL,             -- Creator for group
+  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  FOREIGN KEY (CreatedBy) REFERENCES Users(UserId)
+);
+```
+
+### 3. ConversationMembers Table
+
+Maps users to conversations.
+
+```sql
+IF OBJECT_ID('dbo.ConversationMembers','U') IS NULL
+CREATE TABLE dbo.ConversationMembers(
+  ConversationId INT NOT NULL,
+  UserId INT NOT NULL,
+  JoinedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  PRIMARY KEY (ConversationId, UserId),
+  FOREIGN KEY (ConversationId) REFERENCES Conversations(ConversationId),
+  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+CREATE INDEX IX_ConversationMembers_User ON dbo.ConversationMembers(UserId);
+```
+
+### 4. Messages Table
+
+Single source for all messages.
+
+```sql
+IF OBJECT_ID('dbo.Messages','U') IS NULL
+CREATE TABLE dbo.Messages(
+  MessageId INT IDENTITY(1,1) PRIMARY KEY,
+  ConversationId INT NOT NULL,
+  SenderId INT NOT NULL,
+  MessageText NVARCHAR(MAX) NULL,
+  MediaUrl NVARCHAR(500) NULL,
+  MessageType TINYINT NOT NULL DEFAULT 0, -- 0=Text,1=Image,2=Video,3=Doc,4=Audio
+  SentAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  Edited BIT NOT NULL DEFAULT 0,
+  Deleted BIT NOT NULL DEFAULT 0,
+  FOREIGN KEY (ConversationId) REFERENCES Conversations(ConversationId),
+  FOREIGN KEY (SenderId) REFERENCES Users(UserId)
+);
+
+CREATE INDEX IX_Messages_Conv_SentAt ON dbo.Messages(ConversationId, SentAt DESC, MessageId DESC);
+CREATE INDEX IX_Messages_Sender ON dbo.Messages(SenderId);
+```
+
+### 5. MessageDeliveries Table
+
+Per-recipient delivery/read status.
+
+```sql
+IF OBJECT_ID('dbo.MessageDeliveries','U') IS NULL
+CREATE TABLE dbo.MessageDeliveries(
+  MessageId INT NOT NULL,
+  UserId INT NOT NULL,
+  Status TINYINT NOT NULL, -- 0=Sent,1=Delivered,2=Read
+  DeliveredAt DATETIME2 NULL,
+  ReadAt DATETIME2 NULL,
+  PRIMARY KEY (MessageId, UserId),
+  FOREIGN KEY (MessageId) REFERENCES Messages(MessageId),
+  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+
+CREATE INDEX IX_MessageDeliveries_User_Status ON dbo.MessageDeliveries(UserId, Status);
+```
+
+### 6. UserConnections Table
+
+Tracks online/offline presence.
+
+```sql
+IF OBJECT_ID('dbo.UserConnections','U') IS NULL
+CREATE TABLE dbo.UserConnections(
+  ConnectionId NVARCHAR(200) PRIMARY KEY,
+  UserId INT NOT NULL,
+  ConnectedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+);
+```
+
+---
+
+## **Message Flow**
+
+1. **1:1 Chat**
+
+   * Check if a 1:1 conversation exists for the two users.
+   * If not, create conversation and add both users to `ConversationMembers`.
+   * Insert message in `Messages` with `ConversationId`.
+   * Insert delivery record in `MessageDeliveries` for recipient.
+
+2. **Group Chat**
+
+   * Messages linked to group conversation.
+   * Delivery/read tracking stored per member in `MessageDeliveries`.
+
+3. **UI Display**
+
+   * `SenderId` → message belongs to this user (right side in UI).
+   * `ConversationMembers - SenderId` → recipient(s) (left side in UI).
+
+---
+
+## **SignalR Integration**
+
+* `UserConnections` tracks multiple connections per user.
+* When a message is sent:
+
+  * Server broadcasts to all connections of members in `ConversationMembers` except sender (optional).
+* Presence updates (`online/offline`) are updated in `UserConnections`.
+
+---
+
+## **Usage**
+
+1. Setup SQL Server database with above tables.
+2. Configure **AppDbContext** in .NET project.
+3. Implement **ChatHub** (SignalR) for real-time messaging.
+4. Implement **MessageService** for:
+
+   * Conversation management
+   * Message insertion
+   * Delivery tracking
+5. Client fetches messages by `ConversationId` and renders sender/receiver dynamically.
+
+---
+
+## **Diagram**
+
+```
++----------------+
+|     Users      |
++----------------+
+| UserId PK      |
+| DisplayName    |
+| ProfilePicture |
++----------------+
+        |
+        | 1..*  Membership
+        v
++----------------+
+| ConversationMembers |
++----------------+
+| ConversationId PK,FK |
+| UserId PK,FK         |
+| JoinedAt             |
++----------------+
+        ^
+        | belongs to
+        |
++----------------+
+| Conversations  |
++----------------+
+| ConversationId PK |
+| IsGroup          |
+| Title            |
+| CreatedBy FK     |
+| CreatedAt        |
++----------------+
+        |
+        | 1..* Messages
+        v
++----------------+
+|   Messages     |
++----------------+
+| MessageId PK   |
+| ConversationId FK |
+| SenderId FK    |
+| MessageText    |
+| MediaUrl       |
+| MessageType    |
+| SentAt         |
+| Edited         |
+| Deleted        |
++----------------+
+        |
+        | 1..* Delivery/Read per recipient
+        v
++----------------+
+| MessageDeliveries |
++----------------+
+| MessageId PK,FK   |
+| UserId PK,FK      |
+| Status            |
+| DeliveredAt       |
+| ReadAt            |
++----------------+
+        ^
+        |
+        | Tracks online connections
+        v
++----------------+
+| UserConnections |
++----------------+
+| ConnectionId PK |
+| UserId FK       |
+| ConnectedAt     |
++----------------+
+```
+
+---
+
+## **Notes**
+
+* 1:1 conversations → `IsGroup = 0`, exactly 2 members.
+* Group conversations → `IsGroup = 1`, multiple members.
+* Delivery status → 0=Sent, 1=Delivered, 2=Read.
+* Messages are **single source** for all conversations.
+* Receiver(s) are **derived from `ConversationMembers`** excluding sender.
+* Scalable for real-time apps like WhatsApp.
+
+---
 ## 📜 License
 
 MIT License — Free to use & modify.
