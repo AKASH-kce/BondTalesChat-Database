@@ -9,5 +9,5 @@ CREATE TABLE dbo.ConversationMembers (
 );
 
 -- Index for faster lookup
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_ConversationMembers_User')
-CREATE INDEX IX_ConversationMembers_User ON dbo.ConversationMembers(UserId);
+-- IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_ConversationMembers_User')
+-- CREATE INDEX IX_ConversationMembers_User ON dbo.ConversationMembers(UserId);

@@ -4,5 +4,5 @@ CREATE TABLE dbo.UserConnections (
     ConnectionId NVARCHAR(200) PRIMARY KEY,
     UserId INT NOT NULL,
     ConnectedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+    -- FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
 );

@@ -10,10 +10,10 @@ CREATE TABLE dbo.Messages (
     SentAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     Edited BIT NOT NULL DEFAULT 0,
     Deleted BIT NOT NULL DEFAULT 0,
-    FOREIGN KEY (ConversationId) REFERENCES dbo.Conversations(ConversationId),
-    FOREIGN KEY (SenderId) REFERENCES dbo.Users(UserId)
+    -- FOREIGN KEY (ConversationId) REFERENCES dbo.Conversations(ConversationId),
+    -- FOREIGN KEY (SenderId) REFERENCES dbo.Users(UserId)
 );
 
 -- Indexes for fast retrieval
-CREATE INDEX IX_Messages_Conv_SentAt ON dbo.Messages(ConversationId, SentAt DESC, MessageId DESC);
-CREATE INDEX IX_Messages_Sender ON dbo.Messages(SenderId);
+-- CREATE INDEX IX_Messages_Conv_SentAt ON dbo.Messages(ConversationId, SentAt DESC, MessageId DESC);
+-- CREATE INDEX IX_Messages_Sender ON dbo.Messages(SenderId);

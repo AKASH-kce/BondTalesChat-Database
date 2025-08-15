@@ -6,11 +6,11 @@ CREATE TABLE dbo.MessageDeliveries (
     Status TINYINT NOT NULL,     -- 0=Sent,1=Delivered,2=Read
     DeliveredAt DATETIME2 NULL,
     ReadAt DATETIME2 NULL,
-    PRIMARY KEY (MessageId, UserId),
-    FOREIGN KEY (MessageId) REFERENCES dbo.Messages(MessageId),
-    FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
+    -- PRIMARY KEY (MessageId, UserId),
+    -- FOREIGN KEY (MessageId) REFERENCES dbo.Messages(MessageId),
+    -- FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
 );
 
 -- Index for fast delivery queries
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_MessageDeliveries_User_Status')
-    CREATE INDEX IX_MessageDeliveries_User_Status ON dbo.MessageDeliveries(UserId, Status);
+-- IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_MessageDeliveries_User_Status')
+--     CREATE INDEX IX_MessageDeliveries_User_Status ON dbo.MessageDeliveries(UserId, Status);
