@@ -1,3 +1,4 @@
+-- CONVERSATIONS (1:1 or group)
 IF OBJECT_ID('dbo.Conversations','U') IS NULL
 CREATE TABLE dbo.Conversations (
     ConversationId INT IDENTITY PRIMARY KEY,
@@ -5,5 +6,5 @@ CREATE TABLE dbo.Conversations (
     Title NVARCHAR(200) NULL,           -- Group name
     CreatedBy INT NULL,                 -- Creator for group
     CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    FOREIGN KEY (CreatedBy) REFERENCES Users(UserId)
+    FOREIGN KEY (CreatedBy) REFERENCES dbo.Users(UserId)
 );

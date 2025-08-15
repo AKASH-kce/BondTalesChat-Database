@@ -1,3 +1,4 @@
+-- MESSAGES
 IF OBJECT_ID('dbo.Messages','U') IS NULL
 CREATE TABLE dbo.Messages (
     MessageId INT IDENTITY(1,1) PRIMARY KEY,
@@ -9,8 +10,8 @@ CREATE TABLE dbo.Messages (
     SentAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     Edited BIT NOT NULL DEFAULT 0,
     Deleted BIT NOT NULL DEFAULT 0,
-    FOREIGN KEY (ConversationId) REFERENCES Conversations(ConversationId),
-    FOREIGN KEY (SenderId) REFERENCES Users(UserId)
+    FOREIGN KEY (ConversationId) REFERENCES dbo.Conversations(ConversationId),
+    FOREIGN KEY (SenderId) REFERENCES dbo.Users(UserId)
 );
 
 -- Indexes for fast retrieval

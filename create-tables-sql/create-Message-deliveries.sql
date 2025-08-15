@@ -1,3 +1,4 @@
+-- MESSAGE DELIVERIES (per-recipient read/delivery status)
 IF OBJECT_ID('dbo.MessageDeliveries','U') IS NULL
 CREATE TABLE dbo.MessageDeliveries (
     MessageId INT NOT NULL,
@@ -6,10 +7,10 @@ CREATE TABLE dbo.MessageDeliveries (
     DeliveredAt DATETIME2 NULL,
     ReadAt DATETIME2 NULL,
     PRIMARY KEY (MessageId, UserId),
-    FOREIGN KEY (MessageId) REFERENCES Messages(MessageId),
-    FOREIGN KEY (UserId) REFERENCES Users(UserId)
+    FOREIGN KEY (MessageId) REFERENCES dbo.Messages(MessageId),
+    FOREIGN KEY (UserId) REFERENCES dbo.Users(UserId)
 );
 
--- Index for faster queries
+-- Index for fast delivery queries
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_MessageDeliveries_User_Status')
-CREATE INDEX IX_MessageDeliveries_User_Status ON dbo.MessageDeliveries(UserId, Status);
+    CREATE INDEX IX_MessageDeliveries_User_Status ON dbo.MessageDeliveries(UserId, Status);

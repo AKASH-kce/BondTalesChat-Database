@@ -1,9 +1,10 @@
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U')
-BEGIN
-    CREATE TABLE Users (
-        UserId INT IDENTITY PRIMARY KEY,
-        UserName NVARCHAR(100) NOT NULL,
-        Email NVARCHAR(200) UNIQUE NOT NULL,
-        PasswordHash NVARCHAR(500) NOT NULL
-    );
-END;
+-- USERS table
+IF OBJECT_ID('dbo.Users', 'U') IS NULL
+CREATE TABLE dbo.Users (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    username NVARCHAR(200) NOT NULL,
+    email NVARCHAR(200) NOT NULL,
+    password NVARCHAR(200) NOT NULL,
+    ProfilePicture NVARCHAR(500) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
