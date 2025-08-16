@@ -7,7 +7,7 @@ CREATE TABLE dbo.Messages (
     MessageText NVARCHAR(MAX) NULL,
     MediaUrl NVARCHAR(500) NULL,
     MessageType TINYINT NOT NULL DEFAULT 0,   -- 0=Text,1=Image,2=Video,3=Doc,4=Audio
-    SentAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    SentAt DATETIME2 NOT NULL,
     Edited BIT NOT NULL DEFAULT 0,
     Deleted BIT NOT NULL DEFAULT 0,
     FOREIGN KEY (ConversationId) REFERENCES dbo.Conversations(ConversationId),
