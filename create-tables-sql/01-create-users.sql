@@ -6,5 +6,7 @@ CREATE TABLE dbo.Users (
     email NVARCHAR(200) NOT NULL,
     userpassword NVARCHAR(200) NOT NULL,
     ProfilePicture NVARCHAR(500) NULL,
-    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    phoneNumber NVARCHAR(10) NOT NULL
+        CHECK (LEN(phoneNumber) = 10)
 );
